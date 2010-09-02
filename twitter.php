@@ -1,7 +1,7 @@
 <?php
 
-/***** Module created by Mathew Taylor/Technology Consult, 
-www.mathewtaylor.co.uk / www.technologyconsult.co.uk. 10/08/2010 *****/
+/** Module created by Mathew Taylor, 
+http://mathewtaylor.co.uk - 14/08/2010 **/
 
 require_once('twitteroauth/twitteroauth.php');
 

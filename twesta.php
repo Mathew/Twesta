@@ -2,7 +2,7 @@
 
 /** Module created by Mathew Taylor, http://mathewtaylor.co.uk - 14/08/2010 **/
 
-require_once('../modules/twitterupdate/twitter.php');
+require_once('../modules/twesta/twitter.php');
 
 class Twesta extends Module{
 
