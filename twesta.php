@@ -36,11 +36,11 @@ class Twesta extends Module{
 	
 	public function uninstall()
 	{
-		if(parent::uninstall())
+		if(parent::uninstall() == False)
 			return False;
 			
 		$query = '
-			DROP `'._DB_PREFIX_.'twesta`
+			DROP TABLE `'._DB_PREFIX_.'twesta`
 		';
 		return Db::getInstance()->Execute($query);
 	}
