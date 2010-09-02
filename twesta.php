@@ -1,6 +1,7 @@
 <?php
 
-/** Module created by Mathew Taylor, http://mathewtaylor.co.uk - 14/08/2010 **/
+/** Module created by Mathew Taylor, 
+http://mathewtaylor.co.uk - 14/08/2010 **/
 
 require_once('../modules/twesta/twitter.php');
 
@@ -92,7 +93,7 @@ class Twesta extends Module{
 	}
 	
 	private function _display_connect_form()
-	{
+	{	
 		$this->_html .= '
 		<form method="post" action="'.$_SERVER['REQUEST_URI'].'" enctype="multipart/form-data">
 			<fieldset style="width: 900px;">

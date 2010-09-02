@@ -4,6 +4,10 @@
 http://mathewtaylor.co.uk - 14/08/2010 **/
 
 require_once('twitteroauth/twitteroauth.php');
+include_once('../config/config.inc.php');
+include_once('../config/settings.inc.php');
+include_once('../classes/Cookie.php');
+
 
 class TwitterAbrahamWrapper{
 
@@ -12,6 +16,7 @@ class TwitterAbrahamWrapper{
 	private $connection;
 	private $oauth_token;
 	private $oauth_token_secret;
+	private $cookie;
 	public $connected;
 
 	public function __construct()
@@ -19,6 +24,7 @@ class TwitterAbrahamWrapper{
 		$this->load_app_keys();
 		$this->load_tokens();
         $this->connection = null;
+		$this->cookie = new Cookie('ps');
 	}
 	
 	private function authenticate_user($callback_url)
@@ -27,11 +33,15 @@ class TwitterAbrahamWrapper{
 		$request_token = $this->connection->getRequestToken($callback_url);
 		$token = $request_token['oauth_token'];
 		
-		$_SESSION['oauth_token'] = $token;
-		$_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
+		//$_SESSION['oauth_token'] = $token;
+		//$_SESSION['oauth_token_secret'] = $request_token['oauth_token_secret'];
+		
+		//prestashop cookie
+		$this->cookie->oauth_token = $token;
+		$this->cookie->oauth_token_secret = $request_token['oauth_token_secret'];
+		
 		switch ($this->connection->http_code) {
 			case 200:
-			echo "200";
 				/* Build authorize URL and redirect user to Twitter. */
 				$url = $this->connection->getAuthorizeURL($token);
 				header('Location: ' . $url); 
@@ -46,18 +56,25 @@ class TwitterAbrahamWrapper{
 	private function callback()
 	{
 		/* Create TwitteroAuth object with app key/secret and token key/secret from default phase */
+		//$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, 
+		//		$_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
+		
 		$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, 
-				$_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
+				$this->cookie->oauth_token, $this->cookie->oauth_token_secret);
 
 		/* Request access tokens from twitter */
 		$access_token = $this->connection->getAccessToken($_REQUEST['oauth_verifier']);
 
 		/* Save the access tokens. Normally these would be saved in a database for future use. */
-		$_SESSION['access_token'] = $access_token;
+		//$_SESSION['access_token'] = $access_token;
+		$this->cookie->access_token = $access_token;
 
 		/* Remove no longer needed request tokens */
-		unset($_SESSION['oauth_token']);
-		unset($_SESSION['oauth_token_secret']);
+		//unset($_SESSION['oauth_token']);
+		//unset($_SESSION['oauth_token_secret']);
+		
+		$this->cookie->oauth_token = NULL;
+		$this->cookie->oauth_token_secret = NULL;
 
 		/* If HTTP response is 200 continue otherwise send to connect page to retry */
 		if (200 == $this->connection->http_code) {
@@ -167,8 +184,10 @@ class TwitterAbrahamWrapper{
 				break;
 
 			case 'callback':
-				$oauth_token = $_SESSION['oauth_token'];
-				$oauth_token_secret = $_SESSION['oauth_token_secret'];
+			//	$oauth_token = $_SESSION['oauth_token'];
+			//	$oauth_token_secret = $_SESSION['oauth_token_secret'];
+				$oauth_token = $this->cookie->oauth_token;
+				$oauth_token_secret = $this->cookie->oauth_token_secret;
 			   
 				if(isset($oauth_token) && isset($oauth_token_secret)){
 					$result = $this->callback($oauth_token, $oauth_token_secret);
