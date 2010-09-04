@@ -53,6 +53,7 @@ class Twesta extends Module{
 		if(isset($_GET['operation'])){
 			$operation = $_GET['operation'];
             $error = $twitter->handle_connect($operation);
+			
 			if(is_string($error)){
 				$this->_display_connect_form();
 				$this->_html .= $error;

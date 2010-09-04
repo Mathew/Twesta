@@ -16,7 +16,7 @@ class TwitterAbrahamWrapper{
 	private $connection;
 	private $oauth_token;
 	private $oauth_token_secret;
-	private $cookie;
+	public $cookie;
 	public $connected;
 
 	public function __construct()
@@ -58,28 +58,26 @@ class TwitterAbrahamWrapper{
 		/* Create TwitteroAuth object with app key/secret and token key/secret from default phase */
 		//$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, 
 		//		$_SESSION['oauth_token'], $_SESSION['oauth_token_secret']);
-		
 		$this->connection = new TwitterOAuth($this->consumer_key, $this->consumer_secret, 
 				$this->cookie->oauth_token, $this->cookie->oauth_token_secret);
 
 		/* Request access tokens from twitter */
 		$access_token = $this->connection->getAccessToken($_REQUEST['oauth_verifier']);
-
+				
 		/* Save the access tokens. Normally these would be saved in a database for future use. */
 		//$_SESSION['access_token'] = $access_token;
-		$this->cookie->access_token = $access_token;
 
+		$this->cookie->oauth_token = $access_token['oauth_token'];
+		$this->cookie->oauth_token_secret = $access_token['oauth_token_secret'];
+		
 		/* Remove no longer needed request tokens */
 		//unset($_SESSION['oauth_token']);
 		//unset($_SESSION['oauth_token_secret']);
-		
-		$this->cookie->oauth_token = NULL;
-		$this->cookie->oauth_token_secret = NULL;
 
 		/* If HTTP response is 200 continue otherwise send to connect page to retry */
 		if (200 == $this->connection->http_code) {
 		  /* The user has been verified and the access tokens can be saved for future use */
-		  $_SESSION['status'] = 'verified';
+		  $this->cookie->twitter_status = 'verified';
 		  if(!$this->save_tokens()){	
 			return FALSE;
 		  }
@@ -94,9 +92,15 @@ class TwitterAbrahamWrapper{
 	
 	private function save_tokens()
 	{
+		/*
 		$query = 'UPDATE `'._DB_PREFIX_.'twitter`
 				SET `oauth_token` = "'.$_SESSION['access_token']['oauth_token'].'",
 					`oauth_token_secret` = "'. $_SESSION['access_token']['oauth_token_secret'] .'"';
+		*/
+		$query = 'UPDATE `'._DB_PREFIX_.'twesta`
+				SET `oauth_token` = "'. $this->cookie->oauth_token .'",
+					`oauth_token_secret` = "'. $this->cookie->oauth_token_secret .'"';
+		
 		Db::getInstance()->Execute($query);
 		//TODO: check update.
 			return TRUE;
@@ -107,10 +111,15 @@ class TwitterAbrahamWrapper{
 		$this->consumer_key = $consumer_key;
 		$this->consumer_secret = $consumer_secret;
 	
-		$query = 'UPDATE `'._DB_PREFIX_.'twitter`
+	/*	$query = 'UPDATE `'._DB_PREFIX_.'twitter`
 					SET `consumer_key` = "'. $this->consumer_key .'",
 						`consumer_secret` = "'. $this->consumer_secret .'"';
+	*/
 	
+		$query = 'INSERT INTO `'._DB_PREFIX_.'twesta`
+					(consumer_key, consumer_secret)
+					VALUES ("'.$this->consumer_key.'", "'.$this->consumer_secret.'")';
+		
 		Db::getInstance()->Execute($query);
 		//TODO: check update.
 		return TRUE;
@@ -120,7 +129,7 @@ class TwitterAbrahamWrapper{
 	{
 		$query = '
 		SELECT `consumer_key`, `consumer_secret`
-		FROM `'._DB_PREFIX_.'twitter` 
+		FROM `'._DB_PREFIX_.'twesta` 
 		';
 
 		if(!$result = Db::getInstance()->ExecuteS($query)){
@@ -137,7 +146,7 @@ class TwitterAbrahamWrapper{
 	{
 		$query = '
 		SELECT *
-		FROM `'._DB_PREFIX_.'twitter` 
+		FROM `'._DB_PREFIX_.'twesta` 
 		';
 
 		if(!$result = Db::getInstance()->ExecuteS($query)){
@@ -168,13 +177,12 @@ class TwitterAbrahamWrapper{
 			$this->oauth_token, $this->oauth_token_secret);
 	}
 	
-	private function disconnect()
-	{}
+	private function disconnect(){/*TODO: Disconnect function*/}
 	
 	public function handle_connect($operation){
 		switch($operation){
 			case 'connect':
-				$callback = "http://www.{$_SERVER["SERVER_NAME"]}{$_SERVER['REQUEST_URI']}&operation=callback";
+				$callback = "http://{$_SERVER["SERVER_NAME"]}{$_SERVER['REQUEST_URI']}&operation=callback";
 				$status = $this->authenticate_user($callback);
 				
 				if($status == FALSE){
@@ -188,11 +196,11 @@ class TwitterAbrahamWrapper{
 			//	$oauth_token_secret = $_SESSION['oauth_token_secret'];
 				$oauth_token = $this->cookie->oauth_token;
 				$oauth_token_secret = $this->cookie->oauth_token_secret;
-			   
+			
 				if(isset($oauth_token) && isset($oauth_token_secret)){
 					$result = $this->callback($oauth_token, $oauth_token_secret);
 					if($result == TRUE){
-						$twitter->connected = TRUE;
+						$this->connected = TRUE;
 					}
 				}else{
 					$error = 'Please retry your connection';
