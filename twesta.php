@@ -48,7 +48,7 @@ class Twesta extends Module{
 	
 	public function getContent()
 	{
-		$twitter = new TwitterAbrahamWrapper();
+		$twitter = TwitterAbrahamWrapper::get_instance();
 	
 		if(isset($_GET['operation'])){
 			$operation = $_GET['operation'];
@@ -82,6 +82,10 @@ class Twesta extends Module{
 				}else{
 					$error = "Please specify a message";
 				}
+			}
+			
+			if($twitter->error){
+				echo $twitter->error;
 			}
 			
 			if($twitter->connected){
